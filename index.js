@@ -8,7 +8,10 @@ const mongoose =require ("mongoose");
 //  database
 const database = require("./database");
 
-
+// models
+const BookModels =require ("/database/book");
+const AuthorModels =require ("/database/auhor");
+const PublicationModels =require ("/database/publication");
 // initialization
 const booky =express();
 
