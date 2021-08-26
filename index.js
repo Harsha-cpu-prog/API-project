@@ -4,17 +4,12 @@ require ("dotenv").config();
 const express = require ("express");
 const mongoose =require ("mongoose");
 
+// Microservices Route
+const Books =require ("./API/Book");
+const Authors =require ("./API/Author");
+const Publications =require ("./API/Publication");
 
-//  database
-const database = require("./database");
-
-// models
-const BookModel =require ("/database/book");
-const AuthorModel =require ("/database/author");
-const PublicationModel =require ("/database/publication");
-
-
-// initialization
+// initialization express
 const booky =express();
 
 
@@ -35,7 +30,10 @@ mongoose.connect(
 )
 .then(() =>console.log("connection established"));
    
-
+// initializing microservices
+booky.use("/book",Books);
+booky.use("/author",Authors);
+booky.use("/publication",Publications);
 
 /**Route         /
  description    get all books

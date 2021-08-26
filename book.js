@@ -6,7 +6,8 @@ const BookSchema = mongoose.Schema({
       required: true,
       minLength: 8,
       maxLength: 10,
-    }, // required
+    },
+     // required
     title: {
       type: String,
       required: true,
