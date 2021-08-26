@@ -10,7 +10,7 @@ const database = require("./database");
 
 // models
 const BookModel =require ("/database/book");
-const AuthorModel =require ("/database/auhor");
+const AuthorModel =require ("/database/author");
 const PublicationModel =require ("/database/publication");
 
 
