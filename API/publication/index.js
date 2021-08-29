@@ -13,8 +13,13 @@ methods        get
  */
 
 Router.get("/",(req,res)=>{
+    try{
    const  getAllPublications =await PublicationModel.find()
     return res.json({getAllPublications});
+
+    }catch (error){
+        return res.json ({error :error.message});
+        }
 });
 
 
@@ -24,17 +29,21 @@ Router.get("/",(req,res)=>{
 parameter      id
 methods        get
  */
-Router.get("/p/:id", (req,res) => {
-    const getSpecificPublication = database.publication.filter (
-        (publication) => database.publication.id ===req.params.id
-        );
-
-    if (getSpecificPublication.length ===0){
+Router.get("/p/:id",async (req,res) => {
+    try{
+    const getSpecificPublication = await PublicationModel.findOne({
+    id:req.params.id,
+});
+    if (!getSpecificPublication){
         return res.json({
              error:`No publication found for the id of ${req.params.id}`,
     });
-} 
+}
     return res.json({author:getSpecificPublication});
+
+} catch (error){
+    return res.json({error:error.message});
+}
 });
 
 
@@ -45,16 +54,19 @@ parameter      isbn
 methods        get
  */
 Router.get(" /books/:isbn",(req,res)=>{ 
-    const getSpecificPublication =database.publication.filter ((publication)=> 
-    publication.books.includes(req.params.isbn)
-    );
+    try{
+    const getSpecificPublication =await PublicationModel.find({id:req.params.book})
     
-    if (getSpecificPublication.length ===0){
+    if (!getSpecificPublication){
         return res.json({
              error:`No Publication found based on book of ${req.params.isbn}`,
     });
 }
 return res.json({author:getSpecificPublication});
+
+} catch (error){
+    return res.json({error:error.message});
+}
 });
 
 /**Route         /publication/add
@@ -64,9 +76,13 @@ parameter      none
 methods        post
  */
 Router.post("/add",(req,res)=>{
+    try{
     const {newPublication }=req.body;
     PublicationModel.create(newPublication);
     return res.json ({message:"publicaion was added"});
+} catch (error){
+    return res.json({error:error.message});
+}
 });
 
 /**Route          /publication/update/name
@@ -78,14 +94,24 @@ methods        put
 
 
 Router.put("/update/name/:id",(req,res) =>{
-    database.publications.forEach((publication) => {
-        if(publication.id ===req.params.pubId){
-        publication.name =req.body.newPublicationName;
-            return;
-        }
-    });
-    return res.json({publication:database.publication});
-  });
+    try{
+    const updatedpublication = await PublicationModel.findOneAndUpdate(
+       {
+           id:req.params.id,
+       },
+       {
+           name:req,body,PublicationName,
+       },
+       {
+           new:true,
+       }
+    );
+
+    return res.json({publication:updatedpublication});
+}catch (error){
+    return res.json ({error :error.message});
+}
+});
 
 
 /**Route          /publication/update/book
@@ -96,25 +122,47 @@ methods        put
  */
 
 // update publication database
-Router.delete("/update/book/:isbn",(req,res)=>{
-    database.publications.forEach((publication) =>{
-     if (publication.id===req.body.pubId){
-         return publication.books.push(req.params.isbn);
-     }
-    });
+Router.put("/update/book/:isbn",(req,res)=>{
+    try{
+        const updatedPublication =await PublicationModel.findOneAndUpdate(
+            {
+               id:req.body.newPublication, 
+            },
+            {
+                $addToSet:{
+                    books:req.params.isbn,
+                },
+            },
+            {
+                new:true,
+            }
+        );
+    
+    
     // update book databse
-    database.books.forEach((book)=>{
-        if(book.ISBN ===req.params.isbn){
-            book.publication =req.body.pubId;
-            return;
-        }
+   const updatedBook =await BookModel.findOneAndUpdate(
+       {
+           ISBN:req.params.isbn,
+       },
+       {
+           $addToSet:{
+               publications:req.body.newPublication,
+           },
+       },
+       {
+           new:true,
+       }
 
-    });
+   );
+
     return res.json({
-        books:database.books,
-    publications:database.publications,
+        books:updatedBook,
+    publications:updatedPublication,
 message:"sucessfully updated publication",
 });
+}catch (error){
+    return res.json ({error :error.message});
+}
 });
 
 /**Route          /publication/delete
@@ -124,6 +172,7 @@ parameter      id
 methods        delete
  */
 Router.delete("/publication/delete/:id",(req,res)=>{
+    try{
     const updatedPublicationDatabase=await PublicationModel.findOneAndDelete({
         id:req.params.pubId,
     })
@@ -132,37 +181,54 @@ Router.delete("/publication/delete/:id",(req,res)=>{
     // );
     // database.publications = updatedPublicationDatabase;
     return res.json({publications:updatedPublicationDatabase});
+}catch (error){
+    return res.json ({error :error.message});
+}
 });
 
 
 /**Route          /publication/delete/book
+//  *
  description     delete book from publication
   acess       public
 parameter      isbn,publication id
 methods        delete
  */
 Router.delete("/delete/book/:isbn/:pubId", (req,res)=> {
+    try{
 // update the publication databse
-database.publications.forEach((publication)=>{
-    if (publication.id ===parseInt(req.params.pubId)){
-        const newBooksList =publication.books.filter(
-            (book)=>book !== req.params.isbn
-        );
-        publication.books=newBooksList;
-        return;
-    }
-});
-// update book databse
-database.books.forEach((book)=>{
-    if(book.ISBN ===req.params.isbn){
-        book.publication=0;
-        return;
-
-    }
-});
+const updatedPublication=await PublicationModel.findOneAndUpdate({
+    id:parseInt(req.params.pubId),
+},
+{
+$pull:{
+    books:req.params.isbn,
+},
+},
+{new:true}
+);
+    
+    // update book databse
+    const updatedBook =await BookModel.findOneAndUpdate(
+        {
+        ISBN :req.params.isbn,
+        },
+        {
+            $pull :{
+            publications:parseInt(req.params.pubId),
+            },
+        },
+            { 
+                new:true}
+    );
 return res.json({
-    books:database.books,
-    publications:database.publications,
+    books:updatedBook,
+    publications:updatedPublication,
 
 });
+}catch(error){
+    return res.json({error:error.message});
+}
+    });
+
 module.exports=Router;

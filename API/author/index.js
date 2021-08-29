@@ -12,9 +12,13 @@ parameter      none
 methods        get
  */
 Router.get("/",async (req,res) =>{
-    try
+    try {
     const getAllAuthors=await AuthorModel.find()
     return res.json({getAllAuthors});
+
+    }catch (error){
+    return res.json ({error :error.message});
+    }
 });
 
 /**Route        / author/d
@@ -24,6 +28,7 @@ parameter      id
 methods        get
  */
 Router.get("/d/:id", async(req,res) => {
+    try{
     const getSpecificAuthor = await AuthorModel.findOne ({
         id:req.params.id,
     });
@@ -35,6 +40,9 @@ Router.get("/d/:id", async(req,res) => {
     });
 } 
     return res.json({author:getSpecificAuthor});
+}catch (error){
+    return res.json ({error :error.message});
+}
 });
 
 
@@ -46,13 +54,8 @@ methods        get
  */
 Router.get("/book/:isbn",async(req,res)=>{ 
     try{
-
-    
-    const getSpecificAuthors =database.authors.filter ((author)=> 
-    author.books.includes(req.params.isbn)
-    );
-    
-    if (getSpecificAuthor.length ===0){
+    const getSpecificAuthors =await AuthorModel .find({ISBN:req.params.isbn})
+    if (!getSpecificAuthor){
         return res.json({
              error:`No Author found for book of ${req.params.isbn}`,
     });
@@ -71,9 +74,13 @@ parameter      none
 methods        post
  */
 Router.post("/add",(req,res)=>{
+    try{
     const {newAuthor }=req.body;
-    AuthorModel.create(newAuthor);
+   await  AuthorModel.create(newAuthor);
     return res.json ({message:"author was added"});
+    }catch(error){
+        return res.json({error:error.message});
+    }
 });
 
 /**Route         /book/update/author
@@ -83,6 +90,7 @@ parameter      isbn
 methods        put
  */
 Router.put("  /book/update/author/:isbn/:authorId",(req,res) =>{
+    try{
     // update the book database
     const updatedBook =await BookModel.findOneAndUpdate(
         {
@@ -130,6 +138,10 @@ Router.put("  /book/update/author/:isbn/:authorId",(req,res) =>{
         author:updatedAuthor,
     message:"new author added",
     });
+}catch(error){
+    return res.json({error:error.message});
+}
+    
     });
     
     /**Route          /author/update/name
@@ -139,13 +151,22 @@ Router.put("  /book/update/author/:isbn/:authorId",(req,res) =>{
     methods        put
      */
     Router.put("/update/name/:id",(req,res) =>{
-        database.authors.forEach((author) => {
-            if(author.id ===req.params.id){
-            author.name =req.body.newAuthorName;
-                return;
-            }
-        });
-        return res.json({author:database.author});
+        try{
+        const updatedAuthor =await AuthorModel.findOneAndUpdate(
+            {
+                id:req.params.id,
+            },
+            {
+                name:req,body,AuthorName,
+            },
+            {
+                new:true,
+            },
+        );
+        return res.json({author:updatedAuthor});
+    }catch(error){
+            return res.json({error:error.message});
+        }
       });
 
 
@@ -157,6 +178,7 @@ parameter      isbn,author id
 methods        delete
  */
 Router.delete("/book/delete/author/:isbn/:authorId",(req,res)=>{
+    try{
     // update book databse
     const updatedBook =await BookModel.findOneAndUpdate(
         {
@@ -208,6 +230,9 @@ Router.delete("/book/delete/author/:isbn/:authorId",(req,res)=>{
         book:updatedBook,
         author:updatedAuthor,
     });
+}catch(error){
+    return res.json({error:error.message});
+}
     });
     
     
@@ -218,6 +243,7 @@ Router.delete("/book/delete/author/:isbn/:authorId",(req,res)=>{
     methods        delete
      */
     Router.delete("/delete/:id",async (req,res)=>{
+        try{
         const updatedAuthorDatabase=await AuthorModel.findOneAndDelete({
             id:req.params.id,
         })
@@ -226,5 +252,8 @@ Router.delete("/book/delete/author/:isbn/:authorId",(req,res)=>{
         // );
         // database.authors = updatedAuthorDatabase;
         return res.json({authors:updatedBookDatabase});
+    }catch(error){
+        return res.json({error:error.message});
+    }
     });
     module.exports=Router;
